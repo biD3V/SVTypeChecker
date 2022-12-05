@@ -57,6 +57,7 @@ function listPokemonInGame(speciesList) {
 }
 
 readTextFile("./species.txt", function(text) {
+    console.log(text);
     var data = text.split("\r\n");
 
     console.log(data[0]);
