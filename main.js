@@ -1,3 +1,21 @@
+var forms;
+
+class Pokemon {
+    constructor(pokemonData) {
+        this.natDex = pokemonData.Info.DexIndexNational;
+        this.regionDex = pokemonData.Dex ? pokemonData.Dex.Index : null;
+        this.form = pokemonData.Info.Form;
+        this.types = (pokemonData.Type1 == pokemonData.Type2) ? [pokemonData.Type1] : [pokemonData.Type1,pokemonData.Type2];
+    }
+}
+
+function loadForms() {
+    readTextFile("./forms.json",function(text){
+        forms = JSON.parse(text);
+        return;
+    });
+}
+
 function readTextFile(file, callback) {
     var rawFile = new XMLHttpRequest();
     rawFile.overrideMimeType("application/json");
@@ -14,6 +32,17 @@ function typeForPokemon(pokemon) {
     var types = ["Normal","Fighting","Flying","Poison","Ground","Rock","Bug","Ghost","Steel","Fire","Water","Grass","Electric","Psychic","Ice","Dragon","Dark","Fairy","???"];
     if (pokemon.Type1 != pokemon.Type2) return types[pokemon.Type1] + "," + types[pokemon.Type2];
     else return types[pokemon.Type1];
+}
+
+function padNumber(padding,number) {
+    return number.toString().padStart(padding, '0');
+}
+
+function pokemonForm(index,form) {
+    var formID = "ZKN_FORM_" + padNumber(3,index) + "_" + padNumber(3,form)
+    //console.log(`${formID}: ${data[formID]}`);
+    if (forms[formID]) return ` (${forms[formID]})`;
+    else return "";
 }
 
 // function showForeignForms() {
@@ -38,17 +67,19 @@ function typeForPokemon(pokemon) {
 //     // });
 // }
 
-function listPokemonInGame(speciesList) {
+async function listPokemonInGame(speciesList) {
+    await loadForms();
     readTextFile("./personal_array.json", function(text){
         var data = JSON.parse(text);
         for (const pokemon in data.Table) {
             if (Object.hasOwnProperty.call(data.Table, pokemon)) {
                 const element = data.Table[pokemon];
+                const poke = new Pokemon(element);
     
-                if (element.IsPresentInGame && element.Dex) {
+                if (element.IsPresentInGame) {
                     var newDiv = document.createElement("p");
                     newDiv.setAttribute("class","pokemon");
-                    newDiv.innerHTML = "<strong>" + speciesList[element.Info.DexIndexNational] + "</strong> " + ((element.Info.Form > 0) ? ("(" + element.Info.Form + ") ") : " ") + typeForPokemon(element);
+                    newDiv.innerHTML = `${padNumber(3,poke.natDex)} <strong>${speciesList[poke.natDex]}</strong>${pokemonForm(poke.natDex,poke.form)} ${typeForPokemon(element)}`;
                     document.body.appendChild(newDiv);
                 }
             }
